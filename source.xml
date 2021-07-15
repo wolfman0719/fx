@@ -1,0 +1,3609 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26" zv="IRIS for Windows (x86-64) 2019.4 (Build 383U)" ts="2020-01-31 13:09:38">
+<Class name="FX.BP.BuildDB">
+<Description>
+</Description>
+<Super>Ens.BusinessProcessBPL</Super>
+<TimeChanged>65304,47543.186914</TimeChanged>
+<TimeCreated>65295,61212.058342</TimeCreated>
+
+<XData name="BPL">
+<Description>
+BPL Definition</Description>
+<XMLNamespace>http://www.intersystems.com/bpl</XMLNamespace>
+<Data><![CDATA[
+<process language='objectscript' request='Ens.Request' response='Ens.Response' height='2000' width='2150' >
+<context>
+<property name='ExecutionType' type='%String' instantiate='0' >
+<parameters>
+<parameter name='MAXLEN'  value='50' />
+</parameters>
+</property>
+<property name='DBMessage' type='FX.Response.DBLoadMessage' instantiate='0' />
+<property name='ConfigName' type='%String' instantiate='0' >
+<parameters>
+<parameter name='MAXLEN'  value='50' />
+</parameters>
+</property>
+</context>
+<sequence xend='200' yend='1250' >
+<assign name="Initialize" property="context.ConfigName" value="process.%PrimaryRequestHeader.SourceConfigName" action="set" xpos='200' ypos='250' >
+<annotation><![CDATA[どの証券会社か特定する]]]]><![CDATA[></annotation>
+</assign>
+<switch name='SecurityCompany' xpos='200' ypos='350' xend='200' yend='1050' >
+<annotation><![CDATA[どの証券会社の情報か？]]]]><![CDATA[></annotation>
+<case condition='context.ConfigName="LoadRakuten"' name='Rakuten' >
+<transform name='Rakuten' class='FX.Transformation.Rakuten' source='request' target='context.DBMessage' xpos='335' ypos='500' >
+<annotation><![CDATA[楽天証券のデータを変換する]]]]><![CDATA[></annotation>
+</transform>
+</case>
+<case condition='context.ConfigName="LoadRakutenSwap"' name='RakutenSwap' >
+<transform name='RakutenSwap' class='FX.Transformation.RakutenSwap' source='request' target='context.DBMessage' xpos='605' ypos='500' >
+<annotation><![CDATA[楽天証券のスワップデータを変換する]]]]><![CDATA[></annotation>
+</transform>
+</case>
+<case condition='context.ConfigName="LoadIGSecurity"' name='IGSeculity' >
+<transform name='IGSeculity' class='FX.Transformation.IGSeculity' source='request' target='context.DBMessage' xpos='875' ypos='500' >
+<annotation><![CDATA[IG証券のデータを変換する]]]]><![CDATA[></annotation>
+</transform>
+</case>
+<case condition='context.ConfigName="LoadGaitameOnline"' name='GaitameOnline' >
+<transform name='GaitameOnline' class='FX.Transformation.GaitameOnline' source='request' target='context.DBMessage' xpos='1145' ypos='500' >
+<annotation><![CDATA[外為オンライン証券のデータを変換する]]]]><![CDATA[></annotation>
+</transform>
+</case>
+<case condition='context.ConfigName="LoadM2J"' name='M2J' >
+<assign name="SetExecutionType" property="context.ExecutionType" value="request.DealType" action="set" xpos='1415' ypos='500' >
+<annotation><![CDATA[取引タイプ（新規/決済）を取得する]]]]><![CDATA[></annotation>
+</assign>
+<if name='SelectExecutionOnly' condition='context.ExecutionType="決済"' xpos='1415' ypos='600' xend='1415' yend='850' >
+<annotation><![CDATA[決済データのみを抽出する]]]]><![CDATA[></annotation>
+<true>
+<transform name='M2J' class='FX.Transformation.M2J' source='request' target='context.DBMessage' xpos='1550' ypos='750' >
+<annotation><![CDATA[M2J証券のデータを変換する]]]]><![CDATA[></annotation>
+</transform>
+</true>
+</if>
+</case>
+<default/>
+</switch>
+<call name='InsertRecord' target='FX Data Load' async='1' xpos='200' ypos='1150' >
+<annotation><![CDATA[データベースにレコードを書き込む]]]]><![CDATA[></annotation>
+<request type='FX.Request.DBLoadMessage' >
+<assign property="callrequest.FundingCost" value="$translate(context.DBMessage.FundingCost,&quot;,&quot;,&quot;&quot;)" action="set" />
+<assign property="callrequest.ProfitLoss" value="$translate(context.DBMessage.ProfitLoss,&quot;,&quot;,&quot;&quot;)" action="set" />
+<assign property="callrequest.TransactionUnit" value="$translate(context.DBMessage.TransactionUnit,&quot;,&quot;,&quot;&quot;)" action="set" />
+<assign property="callrequest.Broker" value="context.DBMessage.Broker" action="set" />
+<assign property="callrequest.BuySell" value="context.DBMessage.BuySell" action="set" />
+<assign property="callrequest.CloseDate" value="context.DBMessage.CloseDate" action="set" />
+<assign property="callrequest.ClosePrice" value="context.DBMessage.ClosePrice" action="set" />
+<assign property="callrequest.CurrencyPair" value="context.DBMessage.CurrencyPair" action="set" />
+<assign property="callrequest.OpenDate" value="context.DBMessage.OpenDate" action="set" />
+<assign property="callrequest.OpenPrice" value="context.DBMessage.OpenPrice" action="set" />
+</request>
+<response type='Ens.Response' />
+</call>
+</sequence>
+</process>
+]]></Data>
+</XData>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+</Storage>
+</Class>
+
+
+<Class name="FX.Cube.TradingResult">
+<Description>
+</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%DeepSee.CubeDefinition</Super>
+<TimeChanged>65394,53200.501552</TimeChanged>
+<TimeCreated>65394,52943.749223</TimeCreated>
+<DependsOn>FX.DB.Trade</DependsOn>
+
+<XData name="Cube">
+<Description>
+Cube definition from Architect.</Description>
+<XMLNamespace>http://www.intersystems.com/deepsee</XMLNamespace>
+<Data><![CDATA[
+<cube xmlns="http://www.intersystems.com/deepsee" name="TradingResult" displayName="TradingResult" disabled="false" abstract="false" sourceClass="FX.DB.Trade" countMeasureName="%COUNT" bucketSize="8" bitmapChunkInMemory="false" precompute="0" disableListingGroups="false" enableSqlRestrict="false">
+  <dimension name="Broker" disabled="false" hasAll="false" allCaption="All Broker" allDisplayName="Broker" type="data" hidden="false" showHierarchies="default">
+    <hierarchy name="H1" disabled="false" hidden="false">
+      <level name="Broker" disabled="false" sourceProperty="Broker" list="false" useDisplayValue="true" useAsFilter="true" hidden="false">
+      </level>
+    </hierarchy>
+  </dimension>
+  <dimension name="CurrencyPair" disabled="false" hasAll="false" allCaption="All CurrencyPair" allDisplayName="CurrencyPair" type="data" hidden="false" showHierarchies="default">
+    <hierarchy name="H1" disabled="false" hidden="false">
+      <level name="CurrencyPair" disabled="false" sourceProperty="CurrencyPair" list="false" useDisplayValue="true" useAsFilter="true" hidden="false">
+      </level>
+    </hierarchy>
+  </dimension>
+  <dimension name="CloseDate" disabled="false" hasAll="false" allCaption="All CloseDate" allDisplayName="CloseDate" sourceProperty="CloseDate" type="time" calendar="gregorian" hidden="false" showHierarchies="default">
+    <hierarchy name="H1" disabled="false" hidden="false">
+      <level name="CloseDate" disabled="false" timeFunction="Year" list="false" useDisplayValue="true" useAsFilter="true" hidden="false">
+      </level>
+    </hierarchy>
+  </dimension>
+  <measure name="ProfitLoss" disabled="false" sourceProperty="ProfitLoss" aggregate="SUM" type="number" hidden="false" searchable="false">
+  </measure>
+  <measure name="Swap" disabled="false" sourceProperty="Swap" aggregate="SUM" type="number" hidden="false" searchable="false">
+  </measure>
+  <listing name="Details" disabled="false" listingType="table" fieldList="Broker,CurrencyPair,ProfitLoss,Swap,BuySell,OpenDate,CloseDate">
+  </listing>
+</cube>
+]]></Data>
+</XData>
+
+<Parameter name="DOMAIN"/>
+</Class>
+
+
+<Class name="FX.DB.Trade">
+<Super>%Persistent</Super>
+<TimeChanged>65307,61176.504742</TimeChanged>
+<TimeCreated>64537,41571.830664</TimeCreated>
+
+<UDLText name="T">
+<Content><![CDATA[
+/*
+FX履歴データの収集方法
+
+M2J
+
+CSVダウンロード
+　成立履歴一覧を選び、期間を指定
+
+　ダウンロードディレクトリーに成立履歴一覧_nnnn.csvというファイルができる(UTF-8 unix format)
+
+スワップに関しては、csvで抽出する方法がない
+
+カラム１	通貨ペア	USD/JPY
+カラム２	方向		売, 買
+カラム３	タイプ		決済, 新規
+カラム４	ユニット数	1000
+カラム５	価格		108.100		
+カラム６	価格		108.100		
+カラム７	価格		108.100
+カラム８	損益		+218
+カラム９	日付		"2019/10/01 20:19:28"
+カラム１０	日付		"2019/10/01 20:19:28"
+				
+
+
+IG
+
+ライブ口座
+　直近履歴
+　さらに詳しい履歴はこちらをクリック　のところをクリック
+　表示項目から損益明細を選択
+　ポジションの詳細を確認する　決済を選択
+　カスタム期間を指定して履歴のダウンロードボタンを押す
+
+　TradeBreakDown-*.csvというファイルができる。(UTF-8, unix format)
+　数字項目に,が入っている
+　先頭複数行を削除
+　Quote Escaping
+
+　カラム２	日付		02-01-2019 06:10:49
+　カラム４	日付		02-01-2019 06:10:49
+　カラム５　通貨ペア	USD/JPY （標準）
+　カラム６	方向		BUY,SELL
+　カラム７	単位		1（10000）
+　カラム８	価格		109.402
+　カラム９	価格		109.402
+　カラム１１損益		"5,455"
+　カラム１２スワップ	-4745.00
+
+
+楽天証券
+
+スワップ
+入出金・振替
+　証拠金履歴
+　取引タイプでスワップを選ぶ
+　受渡日の範囲を指定して表示ボタンを押す。
+　CSV形式で保存 ボタンを押す。(SJISなのでUTF-8に変換する
+ unix format
+
+　paymenthist_nnn.csvというファイルができる。
+ 最終行（空白行）を削除する
+ Quote Escaping（一度Quoteなしにして生成し、その後QuotingでQuote Allを選択）
+ 
+ カラム１　日付　yyyy/mm/dd
+ カラム４　""付きスワップ金額
+ カラム５　日付　yyyy/mm/dd hh:mm
+ カラム６　"約定No.1438      : ポンド/円       買 [約定レート]146.500 [建玉数量]3,000"
+ 
+
+約定情報
+
+照会（R)>約定照会
+　注文区分　決済
+約定日の範囲を指定
+検索ボタンを押した後、保存ボタンを押す。
+ファイル名を聞かれるので、ファイル名(rakuten.csv)を入力
+SJISをUTF-8に変えて保存 unix format
+最終行（空白行）を削除する
+quote Escaping（一度Quoteなしにして生成し、その後QuotingでQuote Allを選択）
+
+カラム２	通貨ペア　"ユーロ/ドル"
+カラム４　　方向		"買","売"
+カラム５　　ユニット数	"5,000"
+カラム６	決済価格	"1.08906"　
+カラム７	損益		"19.70"
+カラム８	円レート	"108.020"　
+カラム９	損益（円）	"2,127"
+カラム１０	日付		"yyyy/mm/dd hh:mm"
+カラム１１	日付		"yyyy/mm/dd hh:mm"
+
+
+
+外為オンライン
+
+レポート印刷
+
+約定取引明細
+取引区分　決済のみ
+期間指定
+データ出力ボタンを押す
+
+YakujouTorihikiReort.csvというファイルができる。
+SJISをUTF-8に変えて保存(Unix Format)
+
+カラム２	日付		19-10-01 23:58
+カラム５	通貨ペア	USD/JPY
+カラム７	単位		1（1000）
+カラム８	決済価格	108.1200
+カラム９	手数料		20
+カラム１１	損益	　　-1000
+カラム１２	スワップ	-7	
+	
+	
+*/
+]]></Content>
+</UDLText>
+
+<Property name="Broker">
+<Type>%String</Type>
+</Property>
+
+<Property name="OpenDate">
+<Type>%Date</Type>
+</Property>
+
+<Property name="CloseDate">
+<Type>%Date</Type>
+</Property>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="BuySell">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionUnit">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="OpenPrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ClosePrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Swap">
+<Type>%Integer</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.DB.TradeD</DataLocation>
+<DefaultData>TradeDefaultData</DefaultData>
+<IdLocation>^FX.DB.TradeD</IdLocation>
+<IndexLocation>^FX.DB.TradeI</IndexLocation>
+<StreamLocation>^FX.DB.TradeS</StreamLocation>
+<Data name="TradeDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Broker</Value>
+</Value>
+<Value name="3">
+<Value>OpenDate</Value>
+</Value>
+<Value name="4">
+<Value>CloseDate</Value>
+</Value>
+<Value name="5">
+<Value>CurrencyPair</Value>
+</Value>
+<Value name="6">
+<Value>BuySell</Value>
+</Value>
+<Value name="7">
+<Value>TransactionUnit</Value>
+</Value>
+<Value name="8">
+<Value>OpenPrice</Value>
+</Value>
+<Value name="9">
+<Value>ClosePrice</Value>
+</Value>
+<Value name="10">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="11">
+<Value>FundingCost</Value>
+</Value>
+<Value name="12">
+<Value>Swap</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.GaitameOnline">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'FX.GaitameOnline'
+on 2019-10-21 at 16:07:28.543 [2019-10-21 07:07:28.543 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65307,58048.544052</TimeChanged>
+<TimeCreated>65287,66234.151763</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>FX.GaitameOnline.Record</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "" } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(10), tRecLabel, .pLookAhead, "")
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OrderNo =  pObject.OrderNoDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ExecutionDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TransactionType = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TargetOrderNo =  pObject.TargetOrderNoDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.CurrencyPair = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.SellNo =  pObject.SellNoDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.BuyNo =  pObject.BuyNoDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TransactionRate =  pObject.TransactionRateDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.HandlingCost =  pObject.HandlingCostDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.YenRate =  pObject.YenRateDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TradingPL =  pObject.TradingPLDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Swap =  pObject.SwapDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.SettlementFee =  pObject.SettlementFeeDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.SettlementPL = tCurrString
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write($select(pHasTopFields: pObject.OrderNoLogicalToDisplay(pObject.OrderNo),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.ExecutionDateTime,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.TransactionType,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.TargetOrderNoLogicalToDisplay(pObject.TargetOrderNo),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.CurrencyPair,1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.SellNoLogicalToDisplay(pObject.SellNo),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.BuyNoLogicalToDisplay(pObject.BuyNo),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.TransactionRateLogicalToDisplay(pObject.TransactionRate),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.HandlingCostLogicalToDisplay(pObject.HandlingCost),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.YenRateLogicalToDisplay(pObject.YenRate),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.TradingPLLogicalToDisplay(pObject.TradingPL),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.SwapLogicalToDisplay(pObject.Swap),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.SettlementFeeLogicalToDisplay(pObject.SettlementFee),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: pObject.SettlementPL,1: ""),0)
+	Do pStream.Write($char(10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("FX.GaitameOnline.Record")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[""
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="FX.GaitameOnline" type="delimited" char_encoding="UTF-8" targetClassname="FX.GaitameOnline.Record" complexBatchManaged="0" padFromLeft="0" recordTerminator="\x0a" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="OrderNo" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="ExecutionDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="TransactionType" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="TargetOrderNo" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="CurrencyPair" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="SellNo" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="BuyNo" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="TransactionRate" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="HandlingCost" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="YenRate" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="TradingPL" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="Swap" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="SettlementFee" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="SettlementPL" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.GaitameOnline.Record">
+<Description>
+RECORDMAP: Generated from RecordMap 'FX.GaitameOnline'
+on 2019-10-21 at 16:07:28.525 [2019-10-21 07:07:28.525 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%Persistent,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65307,58048.535103</TimeChanged>
+<TimeCreated>65307,58048.525412</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="OrderNo">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="ExecutionDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionType">
+<Type>%String</Type>
+</Property>
+
+<Property name="TargetOrderNo">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="SellNo">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="BuyNo">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="TransactionRate">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="HandlingCost">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="YenRate">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="TradingPL">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Swap">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="SettlementFee">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="SettlementPL">
+<Type>%String</Type>
+</Property>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.GaitameOnline.RecordD</DataLocation>
+<DefaultData>RecordDefaultData</DefaultData>
+<IdLocation>^FX.GaitameOnline.RecordD</IdLocation>
+<IndexLocation>^FX.GaitameOnline.RecordI</IndexLocation>
+<StreamLocation>^FX.GaitameOnline.RecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="RecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>OrderNo</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>TransactionType</Value>
+</Value>
+<Value name="5">
+<Value>TargetOrderNo</Value>
+</Value>
+<Value name="6">
+<Value>CurrencyPair</Value>
+</Value>
+<Value name="7">
+<Value>SellNo</Value>
+</Value>
+<Value name="8">
+<Value>BuyNo</Value>
+</Value>
+<Value name="9">
+<Value>TransactionRate</Value>
+</Value>
+<Value name="10">
+<Value>HandlingCost</Value>
+</Value>
+<Value name="11">
+<Value>YenRate</Value>
+</Value>
+<Value name="12">
+<Value>TradingPL</Value>
+</Value>
+<Value name="13">
+<Value>Swap</Value>
+</Value>
+<Value name="14">
+<Value>SettlementFee</Value>
+</Value>
+<Value name="15">
+<Value>SettlementPL</Value>
+</Value>
+<Value name="16">
+<Value>ExecutionDateTime</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.IGSecurity">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'FX.IGSecurity'
+on 2019-10-18 at 15:38:16.453 [2019-10-18 06:38:16.453 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65304,56296.45479</TimeChanged>
+<TimeCreated>65294,52601.888084</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>FX.IGSecurity.Record</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "" } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(10), tRecLabel, .pLookAhead, $char(34))
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ClosingRef = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ClosedDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OpeningRef = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OpendDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Market = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Period = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Direction = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Size =  pObject.SizeDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Opening =  pObject.OpeningDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Closing =  pObject.ClosingDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TradeCurrency = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ProfitLoss = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Funding =  pObject.FundingDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Borrowing =  pObject.BorrowingDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Dividends =  pObject.DividendsDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.LRPrem =  pObject.LRPremDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Others =  pObject.OthersDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.CommCurrency = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Comm =  pObject.CommDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Total = tCurrString
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write($select(pHasTopFields: ..Escape(pObject.ClosingRef, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ClosedDateTime, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OpeningRef, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OpendDateTime, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Market, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Period, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Direction, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.SizeLogicalToDisplay(pObject.Size), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OpeningLogicalToDisplay(pObject.Opening), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ClosingLogicalToDisplay(pObject.Closing), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.TradeCurrency, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ProfitLoss, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.FundingLogicalToDisplay(pObject.Funding), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.BorrowingLogicalToDisplay(pObject.Borrowing), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.DividendsLogicalToDisplay(pObject.Dividends), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.LRPremLogicalToDisplay(pObject.LRPrem), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OthersLogicalToDisplay(pObject.Others), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.CommCurrency, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.CommLogicalToDisplay(pObject.Comm), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Total, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("FX.IGSecurity.Record")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[""
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="FX.IGSecurity" type="delimited" char_encoding="UTF-8" targetClassname="FX.IGSecurity.Record" complexBatchManaged="0" padFromLeft="0" recordTerminator="\x0a" escaping="quote" escapeSequence="&quot;" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="ClosingRef" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="ClosedDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="OpeningRef" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="OpendDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Market" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Period" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Direction" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Size" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="Opening" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="Closing" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="TradeCurrency" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="ProfitLoss" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Funding" required="0" ignored="0" datatype="%Decimal" params="SCALE=2" repeating="0">
+  </Field>
+  <Field name="Borrowing" required="0" ignored="0" datatype="%Decimal" params="SCALE=2" repeating="0">
+  </Field>
+  <Field name="Dividends" required="0" ignored="0" datatype="%Decimal" params="SCALE=2" repeating="0">
+  </Field>
+  <Field name="LRPrem" required="0" ignored="0" datatype="%Decimal" params="SCALE=2" repeating="0">
+  </Field>
+  <Field name="Others" required="0" ignored="0" datatype="%Decimal" params="SCALE=2" repeating="0">
+  </Field>
+  <Field name="CommCurrency" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Comm" required="0" ignored="0" datatype="%Decimal" params="SCALE=2" repeating="0">
+  </Field>
+  <Field name="Total" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.IGSecurity.Record">
+<Description>
+RECORDMAP: Generated from RecordMap 'FX.IGSecurity'
+on 2019-10-18 at 15:38:16.433 [2019-10-18 06:38:16.433 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%Persistent,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65304,56296.447023</TimeChanged>
+<TimeCreated>65304,56296.433519</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="ClosingRef">
+<Type>%String</Type>
+</Property>
+
+<Property name="ClosedDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="OpeningRef">
+<Type>%String</Type>
+</Property>
+
+<Property name="OpendDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="Market">
+<Type>%String</Type>
+</Property>
+
+<Property name="Period">
+<Type>%String</Type>
+</Property>
+
+<Property name="Direction">
+<Type>%String</Type>
+</Property>
+
+<Property name="Size">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="Opening">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="Closing">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="TradeCurrency">
+<Type>%String</Type>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%String</Type>
+</Property>
+
+<Property name="Funding">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="Borrowing">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="Dividends">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="LRPrem">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="Others">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="CommCurrency">
+<Type>%String</Type>
+</Property>
+
+<Property name="Comm">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="Total">
+<Type>%String</Type>
+</Property>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.IGSecurity.RecordD</DataLocation>
+<DefaultData>RecordDefaultData</DefaultData>
+<IdLocation>^FX.IGSecurity.RecordD</IdLocation>
+<IndexLocation>^FX.IGSecurity.RecordI</IndexLocation>
+<StreamLocation>^FX.IGSecurity.RecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="RecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>ClosingRef</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>OpeningRef</Value>
+</Value>
+<Value name="5">
+<Value>OpendDateTime</Value>
+</Value>
+<Value name="6">
+<Value>Market</Value>
+</Value>
+<Value name="7">
+<Value>Period</Value>
+</Value>
+<Value name="8">
+<Value>Direction</Value>
+</Value>
+<Value name="9">
+<Value>Size</Value>
+</Value>
+<Value name="10">
+<Value>Opening</Value>
+</Value>
+<Value name="11">
+<Value>Closing</Value>
+</Value>
+<Value name="12">
+<Value>TradeCurrency</Value>
+</Value>
+<Value name="13">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="14">
+<Value>Funding</Value>
+</Value>
+<Value name="15">
+<Value>Borrowing</Value>
+</Value>
+<Value name="16">
+<Value>Dividends</Value>
+</Value>
+<Value name="17">
+<Value>LRPrem</Value>
+</Value>
+<Value name="18">
+<Value>Others</Value>
+</Value>
+<Value name="19">
+<Value>CommCurrency</Value>
+</Value>
+<Value name="20">
+<Value>Comm</Value>
+</Value>
+<Value name="21">
+<Value>Total</Value>
+</Value>
+<Value name="22">
+<Value>ClosedDateTime</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.LoadTransaction">
+<Super>Ens.Production</Super>
+<TimeChanged>65301,66633.942526</TimeChanged>
+<TimeCreated>65294,61276.612299</TimeCreated>
+
+<XData name="ProductionDefinition">
+<Data><![CDATA[
+<Production Name="FX.LoadTransaction" LogGeneralTraceEvents="false">
+  <Description></Description>
+  <ActorPoolSize>2</ActorPoolSize>
+  <Item Name="LoadIGSecurity" Category="" ClassName="EnsLib.RecordMap.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="RecordMap">FX.IGSecurity</Setting>
+    <Setting Target="Adapter" Name="ArchivePath">/intersystems/iris/fx/arc</Setting>
+    <Setting Target="Adapter" Name="Charset">utf-8</Setting>
+    <Setting Target="Adapter" Name="FilePath">/intersystems/iris/fx/in</Setting>
+    <Setting Target="Adapter" Name="FileSpec">Trade*</Setting>
+    <Setting Target="Adapter" Name="WorkPath">/intersystems/iris/fx/work</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">BuildDB</Setting>
+  </Item>
+  <Item Name="LoadM2J" Category="" ClassName="EnsLib.RecordMap.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="RecordMap">FX.M2J</Setting>
+    <Setting Target="Adapter" Name="ArchivePath">/intersystems/iris/fx/arc</Setting>
+    <Setting Target="Adapter" Name="Charset">utf-8</Setting>
+    <Setting Target="Adapter" Name="FilePath">/intersystems/iris/fx/in</Setting>
+    <Setting Target="Adapter" Name="FileSpec">m2j*</Setting>
+    <Setting Target="Adapter" Name="WorkPath">/intersystems/iris/fx/work</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">BuildDB</Setting>
+  </Item>
+  <Item Name="LoadRakuten" Category="" ClassName="EnsLib.RecordMap.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="RecordMap">FX.Rakuten</Setting>
+    <Setting Target="Adapter" Name="ArchivePath">/intersystems/iris/fx/arc</Setting>
+    <Setting Target="Adapter" Name="Charset">utf-8</Setting>
+    <Setting Target="Adapter" Name="FilePath">/intersystems/iris/fx/in</Setting>
+    <Setting Target="Adapter" Name="FileSpec">rakuten*</Setting>
+    <Setting Target="Adapter" Name="WorkPath">/intersystems/iris/fx/work</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">BuildDB</Setting>
+  </Item>
+  <Item Name="LoadRakutenSwap" Category="" ClassName="EnsLib.RecordMap.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="RecordMap">FX.RakutenSwap</Setting>
+    <Setting Target="Adapter" Name="ArchivePath">/intersystems/iris/fx/arc</Setting>
+    <Setting Target="Adapter" Name="Charset">utf-8</Setting>
+    <Setting Target="Adapter" Name="FilePath">/intersystems/iris/fx/in</Setting>
+    <Setting Target="Adapter" Name="FileSpec">payment*</Setting>
+    <Setting Target="Adapter" Name="WorkPath">/intersystems/iris/fx/work</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">BuildDB</Setting>
+  </Item>
+  <Item Name="LoadGaitameOnline" Category="" ClassName="EnsLib.RecordMap.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+    <Setting Target="Host" Name="RecordMap">FX.GaitameOnline</Setting>
+    <Setting Target="Adapter" Name="ArchivePath">/intersystems/iris/fx/arc</Setting>
+    <Setting Target="Adapter" Name="Charset">utf-8</Setting>
+    <Setting Target="Adapter" Name="FilePath">/intersystems/iris/fx/in</Setting>
+    <Setting Target="Adapter" Name="FileSpec">Yakujou*</Setting>
+    <Setting Target="Adapter" Name="WorkPath">/intersystems/iris/fx/work</Setting>
+    <Setting Target="Host" Name="TargetConfigNames">BuildDB</Setting>
+  </Item>
+  <Item Name="FX Data Load" Category="" ClassName="FX.Operation.RecordInsert" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="BuildDB" Category="" ClassName="FX.BP.BuildDB" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="true" Schedule="">
+  </Item>
+</Production>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.M2J">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'FX.M2J'
+on 2019-10-18 at 15:39:56.069 [2019-10-18 06:39:56.069 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65304,56396.070704</TimeChanged>
+<TimeCreated>65294,54127.506237</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>FX.M2J.Record</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "" } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(10), tRecLabel, .pLookAhead, $char(34))
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.CurrencyPair = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Direction = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.DealType = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OrderUnit =  pObject.OrderUnitDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OrderedPrice =  pObject.OrderedPriceDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.EstablishedPrice =  pObject.EstablishedPriceDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.AcquisitionPrice =  pObject.AcquisitionPriceDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ProfitLoss =  pObject.ProfitLossDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OrderedDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.EstablishedDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OrderNo =  pObject.OrderNoDisplayToLogical(tCurrString)
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write($select(pHasTopFields: ..Escape(pObject.CurrencyPair, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Direction, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.DealType, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OrderUnitLogicalToDisplay(pObject.OrderUnit), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OrderedPriceLogicalToDisplay(pObject.OrderedPrice), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.EstablishedPriceLogicalToDisplay(pObject.EstablishedPrice), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.AcquisitionPriceLogicalToDisplay(pObject.AcquisitionPrice), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ProfitLossLogicalToDisplay(pObject.ProfitLoss), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OrderedDateTime, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.EstablishedDateTime, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OrderNoLogicalToDisplay(pObject.OrderNo), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("FX.M2J.Record")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[""
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="FX.M2J" type="delimited" char_encoding="UTF-8" targetClassname="FX.M2J.Record" recordTerminator="\x0a" escaping="quote" escapeSequence="&quot;">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="CurrencyPair" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Direction" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="DealType" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="OrderUnit" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="OrderedPrice" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="EstablishedPrice" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="AcquisitionPrice" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="ProfitLoss" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="OrderedDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="EstablishedDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="OrderNo" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.M2J.Record">
+<Description>
+RECORDMAP: Generated from RecordMap 'FX.M2J'
+on 2019-10-18 at 15:39:56.056 [2019-10-18 06:39:56.056 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%Persistent,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65304,56396.063978</TimeChanged>
+<TimeCreated>65304,56396.056915</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="Direction">
+<Type>%String</Type>
+</Property>
+
+<Property name="DealType">
+<Type>%String</Type>
+</Property>
+
+<Property name="OrderUnit">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="OrderedPrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="EstablishedPrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="AcquisitionPrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="OrderedDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="EstablishedDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="OrderNo">
+<Type>%Integer</Type>
+</Property>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.M2J.RecordD</DataLocation>
+<DefaultData>RecordDefaultData</DefaultData>
+<IdLocation>^FX.M2J.RecordD</IdLocation>
+<IndexLocation>^FX.M2J.RecordI</IndexLocation>
+<StreamLocation>^FX.M2J.RecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="RecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>CurrencyPair</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>DealType</Value>
+</Value>
+<Value name="5">
+<Value>OrderUnit</Value>
+</Value>
+<Value name="6">
+<Value>OrderedPrice</Value>
+</Value>
+<Value name="7">
+<Value>EstablishedPrice</Value>
+</Value>
+<Value name="8">
+<Value>AcquisitionPrice</Value>
+</Value>
+<Value name="9">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="10">
+<Value>OrderedDateTime</Value>
+</Value>
+<Value name="11">
+<Value>EstablishedDateTime</Value>
+</Value>
+<Value name="12">
+<Value>OrderNo</Value>
+</Value>
+<Value name="13">
+<Value>Direction</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.Operation.RecordInsert">
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65307,62890.899971</TimeChanged>
+<TimeCreated>65296,47406.997166</TimeCreated>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="InsertRecord">
+<FormalSpec>pRequest:FX.Request.DBLoadMessage,*pResponse:Ens.StringResponse</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set status = $$$OK
+	
+	$$$TRACE("証券会社 = "_pRequest.Broker)
+	$$$TRACE("OpenDate = "_pRequest.OpenDate)
+	$$$TRACE("FundingCost = "_pRequest.FundingCost)
+	
+	if pRequest.Broker'="" {
+	  set record = ##class(FX.DB.Trade).%New()
+	  set record.Broker = pRequest.Broker
+	  set record.BuySell = pRequest.BuySell
+	  if pRequest.CloseDate '= "" set record.CloseDate = $zdateh(pRequest.CloseDate,8)
+	  set record.ClosePrice = pRequest.ClosePrice
+	  set record.CurrencyPair = pRequest.CurrencyPair
+	  set record.Swap = -pRequest.FundingCost
+	  if pRequest.OpenDate '= "" set record.OpenDate = $zdateh(pRequest.OpenDate,8)
+	  set record.OpenPrice = pRequest.OpenPrice
+	  set record.ProfitLoss = +pRequest.ProfitLoss
+	  set record.TransactionUnit = pRequest.TransactionUnit
+	
+	  set status = record.%Save()
+	
+	  set pResponse = ##class(Ens.StringResponse).%New()
+	  
+	  if status = $$$OK {
+	     set pResponse.StringValue = "証券会社 "_pRequest.Broker_" のデータが追加されました。"
+	  }
+	  else {
+	     set pResponse.StringValue = "証券会社 "_pRequest.Broker_" のデータが追加できませんでした。エラー: "_$system.Status.GetErrorText(status)
+	  }
+	}
+	 
+	Quit status
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+	<MapItem MessageType="FX.Request.DBLoadMessage"> 
+		<Method>InsertRecord</Method>
+	</MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Rakuten">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'FX.Rakuten'
+on 2019-10-18 at 15:40:38.882 [2019-10-18 06:40:38.882 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65304,56438.883259</TimeChanged>
+<TimeCreated>65294,56438.290218</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>FX.Rakuten.Record</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "" } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(10), tRecLabel, .pLookAhead, $char(34))
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ExecutionNo =  pObject.ExecutionNoDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.CurrencyPair = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TransactionType = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Direction = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Quantity = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ExecutionRate =  pObject.ExecutionRateDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ProfitLoss =  pObject.ProfitLossDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.YenRate =  pObject.YenRateDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ProfitLossYen = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.OrderDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ExecutionDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Channel = tCurrString
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write($select(pHasTopFields: ..Escape(pObject.ExecutionNoLogicalToDisplay(pObject.ExecutionNo), $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.CurrencyPair, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.TransactionType, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Direction, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Quantity, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ExecutionRateLogicalToDisplay(pObject.ExecutionRate), $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ProfitLossLogicalToDisplay(pObject.ProfitLoss), $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.YenRateLogicalToDisplay(pObject.YenRate), $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ProfitLossYen, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.OrderDateTime, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ExecutionDateTime, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Channel, $lb($char(44)),"all",$char(34)),1: $char(34)_$char(34)),0)
+	Do pStream.Write($char(10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("FX.Rakuten.Record")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[""
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="FX.Rakuten" type="delimited" char_encoding="UTF-8" targetClassname="FX.Rakuten.Record" complexBatchManaged="0" padFromLeft="0" recordTerminator="\x0a" escaping="all" escapeSequence="&quot;" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="ExecutionNo" required="0" ignored="0" datatype="%Integer" repeating="0">
+  </Field>
+  <Field name="CurrencyPair" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="TransactionType" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Direction" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Quantity" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="ExecutionRate" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="ProfitLoss" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="YenRate" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="ProfitLossYen" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="OrderDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="ExecutionDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Channel" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Rakuten.Record">
+<Description>
+RECORDMAP: Generated from RecordMap 'FX.Rakuten'
+on 2019-10-18 at 15:40:38.868 [2019-10-18 06:40:38.868 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%Persistent,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65304,56438.876424</TimeChanged>
+<TimeCreated>65304,56438.868564</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="ExecutionNo">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionType">
+<Type>%String</Type>
+</Property>
+
+<Property name="Direction">
+<Type>%String</Type>
+</Property>
+
+<Property name="Quantity">
+<Type>%String</Type>
+</Property>
+
+<Property name="ExecutionRate">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="YenRate">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLossYen">
+<Type>%String</Type>
+</Property>
+
+<Property name="OrderDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="ExecutionDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="Channel">
+<Type>%String</Type>
+</Property>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.Rakuten.RecordD</DataLocation>
+<DefaultData>RecordDefaultData</DefaultData>
+<IdLocation>^FX.Rakuten.RecordD</IdLocation>
+<IndexLocation>^FX.Rakuten.RecordI</IndexLocation>
+<StreamLocation>^FX.Rakuten.RecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="RecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>ExecutionNo</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>TransactionType</Value>
+</Value>
+<Value name="5">
+<Value>Direction</Value>
+</Value>
+<Value name="6">
+<Value>Quantity</Value>
+</Value>
+<Value name="7">
+<Value>ExecutionRate</Value>
+</Value>
+<Value name="8">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="9">
+<Value>YenRate</Value>
+</Value>
+<Value name="10">
+<Value>ProfitLossYen</Value>
+</Value>
+<Value name="11">
+<Value>OrderDateTime</Value>
+</Value>
+<Value name="12">
+<Value>ExecutionDateTime</Value>
+</Value>
+<Value name="13">
+<Value>Channel</Value>
+</Value>
+<Value name="14">
+<Value>CurrencyPair</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.RakutenSwap">
+<Description>
+RECORDMAP: Modified during compilation of RecordMap 'FX.RakutenSwap'
+on 2019-10-18 at 15:40:59.828 [2019-10-18 06:40:59.828 UTC]
+by user UnknownUser</Description>
+<Super>EnsLib.RecordMap.RecordMap</Super>
+<TimeChanged>65304,56459.828783</TimeChanged>
+<TimeCreated>65302,43117.21386</TimeCreated>
+
+<Method name="GetObject">
+<Description>
+Method to retrieve a record from a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,*pObject:%RegisteredObject,pTimeout:%Numeric=-1,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		Set pObject = $$$NULLOREF
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,,pTimeout,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tObjectName = $parameter($this,"OBJECTNAME")
+		Set tObject = $classmethod(tObjectName,"%New")
+		If '$IsObject(tObject) {
+			Set tStatus = $$$ERROR($$$CannotCreateObject,tObjectName)
+			Quit
+		}
+		Set tObject.%Source = pStream.Name
+		Set tGetTopFields = $parameter(tObject,"INCLUDETOPFIELDS")
+		If pStream.AtEnd && (""=pLookAhead) {
+			Set tStatus = $$$ERROR($$$EnsRecordMapErrStreamAtEnd, pStream.Name)
+			Quit
+		}
+		Set pStream.CharEncoding = "UTF-8"
+
+		#; Parse incoming stream
+		Set tStatus = ..GetRecord(pStream, tObject, tGetTopFields, pTimeout, .pLookAhead, pLabelFound)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	If $$$ISERR(tStatus) { Set pObject = $$$NULLOREF }
+	Else { Set pObject = tObject }
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutObject">
+<Description>
+Method to write a record to a stream or device. This method will be generated based on the
+structure of the RecordMap. For testing purposes, a file name may be passed in the pStream argument.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pFlush:%Boolean=1,&pPadArray:%String]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Try {
+		Set tStatus = $$$OK
+		If '$IsObject(pStream) {
+			Set tFilename = pStream
+			Set pStream = ##class(%IO.FileStream).%New()
+			Do pStream.Open(tFilename,"WAE",,"UTF-8", .tStatus)
+			If $$$ISERR(tStatus) Quit
+		}
+		Set tHasTopFields = $parameter(pObject,"INCLUDETOPFIELDS")
+		Set pStream.CharEncoding = "UTF-8"
+
+		Set tStatus = ..PutRecord(pStream, pObject, tHasTopFields, .pPadArray)
+		If $$$ISERR(tStatus) Quit
+		If pFlush Do pStream.Flush(.tStatus)
+		If $$$ISERR(tStatus) Quit
+	}
+	Catch ex {
+		Set tStatus = ex.AsStatus()
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Parameter name="OBJECTNAME">
+<Default>FX.RakutenSwap.Record</Default>
+</Parameter>
+
+<Method name="GetRecord">
+<Description>
+Internal helper method to perform parse of incoming data</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pGetTopFields:%Boolean,pTimeout:%Numeric,&pLookAhead:%String="",pLabelFound:%Boolean=0]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	If pLabelFound { Set tRecLabel = "" } 
+	Else { Set tRecLabel = "" } 
+	Set tStatus = ..chunkRecord(pStream, .tRecordData, .tCharCount, "", pTimeout, $char(10), tRecLabel, .pLookAhead, $char(34))
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tMaxLocal = $$$MaxLocalLength
+	Set tRecordData("charcount") = +$get(tCharCount)
+	Set tCurrChunk = 1
+	Set tTopPiece = 1
+	Set tCurrSep = 1
+	Set tStrings = 1
+	Set tCurrString = ""
+	Set tSeps = $listbuild($char(44))
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Else {
+		Set tCurrString = tRecordData(tCurrChunk)
+		Set tCurrPiece = 1
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.DeliveryDate = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TransactionType = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Currency = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.ProfitLoss =  pObject.ProfitLossDisplayToLogical(tCurrString)
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.TransactionDateTime = tCurrString
+	}
+	If '$data(tRecordData(tCurrChunk, "block")) {
+		Set tCurrString = $piece(tRecordData(tCurrChunk), $char(44), tTopPiece)
+	}
+	Do ..checkMerge(.tCurrChunk, .tRecordData, .tCurrString, $char(44), .tTopPiece)
+	If pGetTopFields {
+		Set pObject.Details = tCurrString
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="PutRecord">
+<Description>
+Internal helper method to output object to a stream</Description>
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[pStream:%IO.DeviceStream,pObject:%RegisteredObject,pHasTopFields:%Boolean,&pPadArray:%String]]></FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Do pStream.Write($select(pHasTopFields: ..Escape(pObject.DeliveryDate, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.TransactionType, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Currency, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.ProfitLossLogicalToDisplay(pObject.ProfitLoss), $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.TransactionDateTime, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(44) _ $select(pHasTopFields: ..Escape(pObject.Details, $lb($char(44)),"quote",$char(34)),1: ""),0)
+	Do pStream.Write($char(10), 0, .tStatus)
+	If $$$ISERR(tStatus) Quit tStatus
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="GetGeneratedClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>*pClasses:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Kill pClasses
+	Set pClasses("FX.RakutenSwap.Record")=""
+	Set pClasses($classname())=""
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getIdentifier">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[""
+]]></Implementation>
+</Method>
+
+<Method name="getType">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<FormalSpec/>
+<ReturnType>EnsLib.RecordMap.Model.DataType.RecordType</ReturnType>
+<Implementation><![CDATA["delimited"
+]]></Implementation>
+</Method>
+
+<XData name="RecordMap">
+<XMLNamespace>http://www.intersystems.com/Ensemble/RecordMap</XMLNamespace>
+<Data><![CDATA[
+<Record xmlns="http://www.intersystems.com/Ensemble/RecordMap" name="FX.RakutenSwap" type="delimited" char_encoding="UTF-8" targetClassname="FX.RakutenSwap.Record" complexBatchManaged="0" padFromLeft="0" recordTerminator="\x0a" escaping="quote" escapeSequence="&quot;" allowEarlyTerminator="0">
+  <Separators>
+    <Separator>,</Separator>
+  </Separators>
+  <Field name="DeliveryDate" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="TransactionType" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Currency" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="ProfitLoss" required="0" ignored="0" datatype="%Decimal" params="SCALE=5" repeating="0">
+  </Field>
+  <Field name="TransactionDateTime" required="0" ignored="0" datatype="%String" repeating="0">
+  </Field>
+  <Field name="Details" required="0" ignored="0" datatype="%String" params="MAXLEN=100" repeating="0">
+  </Field>
+</Record>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.RakutenSwap.Record">
+<Description>
+RECORDMAP: Generated from RecordMap 'FX.RakutenSwap'
+on 2019-10-18 at 15:40:59.819 [2019-10-18 06:40:59.819 UTC]
+by user UnknownUser</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%Persistent,%XML.Adaptor,Ens.Request,EnsLib.RecordMap.Base</Super>
+<TimeChanged>65304,56459.82317</TimeChanged>
+<TimeCreated>65304,56459.819317</TimeCreated>
+<Inheritance>right</Inheritance>
+
+<Parameter name="INCLUDETOPFIELDS">
+<Default>1</Default>
+</Parameter>
+
+<Property name="DeliveryDate">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionType">
+<Type>%String</Type>
+</Property>
+
+<Property name="Currency">
+<Type>%String</Type>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="TransactionDateTime">
+<Type>%String</Type>
+</Property>
+
+<Property name="Details">
+<Type>%String</Type>
+<Parameter name="MAXLEN" value="100"/>
+</Property>
+
+<Parameter name="RECORDMAPGENERATED">
+<Default>1</Default>
+</Parameter>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.RakutenSwap.RecordD</DataLocation>
+<DefaultData>RecordDefaultData</DefaultData>
+<IdLocation>^FX.RakutenSwap.RecordD</IdLocation>
+<IndexLocation>^FX.RakutenSwap.RecordI</IndexLocation>
+<StreamLocation>^FX.RakutenSwap.RecordS</StreamLocation>
+<ExtentSize>2000000</ExtentSize>
+<Data name="RecordDefaultData">
+<Structure>listnode</Structure>
+<Subscript/>
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>DeliveryDate</Value>
+</Value>
+<Value name="3">
+<Value>%Source</Value>
+</Value>
+<Value name="4">
+<Value>Currency</Value>
+</Value>
+<Value name="5">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="6">
+<Value>TransactionDateTime</Value>
+</Value>
+<Value name="7">
+<Value>Details</Value>
+</Value>
+<Value name="8">
+<Value>TransactionType</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.Request.DBLoadMessage">
+<Super>Ens.Request</Super>
+<TimeChanged>65307,58166.670482</TimeChanged>
+<TimeCreated>65295,63904.399655</TimeCreated>
+
+<Property name="Broker">
+<Type>%String</Type>
+</Property>
+
+<Property name="OpenDate">
+<Type>%String</Type>
+</Property>
+
+<Property name="CloseDate">
+<Type>%String</Type>
+</Property>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="BuySell">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionUnit">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="OpenPrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ClosePrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="FundingCost">
+<Type>%Integer</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>DBLoadMessageDefaultData</DefaultData>
+<Data name="DBLoadMessageDefaultData">
+<Subscript>"DBLoadMessage"</Subscript>
+<Value name="1">
+<Value>Broker</Value>
+</Value>
+<Value name="2">
+<Value>OpenDate</Value>
+</Value>
+<Value name="3">
+<Value>CloseDate</Value>
+</Value>
+<Value name="4">
+<Value>CurrencyPair</Value>
+</Value>
+<Value name="5">
+<Value>BuySell</Value>
+</Value>
+<Value name="6">
+<Value>TransactionUnit</Value>
+</Value>
+<Value name="7">
+<Value>OpenPrice</Value>
+</Value>
+<Value name="8">
+<Value>ClosePrice</Value>
+</Value>
+<Value name="9">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="10">
+<Value>FundingCost</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.Response.DBLoadMessage">
+<Super>Ens.Response</Super>
+<TimeChanged>65307,58132.867024</TimeChanged>
+<TimeCreated>65295,64010.907239</TimeCreated>
+
+<Property name="Broker">
+<Type>%String</Type>
+</Property>
+
+<Property name="OpenDate">
+<Type>%String</Type>
+</Property>
+
+<Property name="CloseDate">
+<Type>%String</Type>
+</Property>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="BuySell">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionUnit">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="OpenPrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ClosePrice">
+<Type>%Decimal</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="FundingCost">
+<Type>%Integer</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DefaultData>DBLoadMessageDefaultData</DefaultData>
+<Data name="DBLoadMessageDefaultData">
+<Subscript>"DBLoadMessage"</Subscript>
+<Value name="1">
+<Value>Broker</Value>
+</Value>
+<Value name="2">
+<Value>OpenDate</Value>
+</Value>
+<Value name="3">
+<Value>CloseDate</Value>
+</Value>
+<Value name="4">
+<Value>CurrencyPair</Value>
+</Value>
+<Value name="5">
+<Value>BuySell</Value>
+</Value>
+<Value name="6">
+<Value>TransactionUnit</Value>
+</Value>
+<Value name="7">
+<Value>OpenPrice</Value>
+</Value>
+<Value name="8">
+<Value>ClosePrice</Value>
+</Value>
+<Value name="9">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="10">
+<Value>FundingCost</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.Trade">
+<Super>%Persistent</Super>
+<TimeChanged>65295,63748.570303</TimeChanged>
+<TimeCreated>64537,41571.830664</TimeCreated>
+
+<UDLText name="T">
+<Content><![CDATA[
+/*
+FX履歴データの収集方法
+
+M2J
+
+CSVダウンロード
+　成立履歴一覧を選び、期間を指定
+
+　ダウンロードディレクトリーに成立履歴一覧_nnnn.csvというファイルができる(UTF-8 unix format)
+
+スワップに関しては、成立したものの累計を計上する。
+保持したポジションの日々のスワップを抽出する方法が見つからないためとりあえずこの値を取得する。
+従って正確なデータではない
+
+IG
+
+ライブ口座
+　直近履歴
+　さらに詳しい履歴はこちらをクリック　のところをクリック
+　表示項目から損益明細を選択
+　ポジションの詳細を確認する　決済を選択
+　カスタム期間を指定して履歴のダウンロードボタンを押す
+
+　TradeBreakDown-*.csvというファイルができる。(UTF-8, unix format)
+　数字項目に,が入っている
+　先頭複数行を削除
+　Quote Escaping
+
+楽天証券
+
+スワップ
+入出金・振替
+　証拠金履歴
+　取引タイプでスワップを選ぶ
+　受渡日の範囲を指定して表示ボタンを押す。
+　CSV形式で保存 ボタンを押す。(SJISなのでUTF-8に変換する
+ unix format
+
+　paymenthist_nnn.csvというファイルができる。
+ 最終行（空白行）を削除する
+ Quote Escaping（一度Quoteなしにして生成し、その後QuotingでQuote Allを選択）
+
+約定情報
+
+照会（R)>約定照会
+　注文区分　決済
+約定日の範囲を指定
+検索ボタンを押した後、保存ボタンを押す。
+ファイル名を聞かれるので、ファイル名(rakuten.csv)を入力
+SJISをUTF-8に変えて保存 unix format
+最終行（空白行）を削除する
+quote Escaping（一度Quoteなしにして生成し、その後QuotingでQuote Allを選択）
+
+外為オンライン
+
+レポート印刷
+
+約定取引明細
+取引区分　決済のみ
+期間指定
+データ出力ボタンを押す
+
+YakujouTorihikiReort.csvというファイルができる。
+SJISをUTF-8に変えて保存(Unix Format)
+
+*/
+]]></Content>
+</UDLText>
+
+<Property name="Broker">
+<Type>%String</Type>
+</Property>
+
+<Property name="OpenDate">
+<Type>%Date</Type>
+</Property>
+
+<Property name="CloseDate">
+<Type>%Date</Type>
+</Property>
+
+<Property name="CurrencyPair">
+<Type>%String</Type>
+</Property>
+
+<Property name="BuySell">
+<Type>%String</Type>
+</Property>
+
+<Property name="TransactionUnit">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="OpenPrice">
+<Type>%Numeric</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ClosePrice">
+<Type>%Numeric</Type>
+<Parameter name="SCALE" value="5"/>
+</Property>
+
+<Property name="ProfitLoss">
+<Type>%Numeric</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Property name="FundingCost">
+<Type>%Numeric</Type>
+<Parameter name="SCALE" value="2"/>
+</Property>
+
+<Method name="LoadIGData">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pFileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set status = $$$OK
+	
+	set stream = ##class(%FileCharacterStream).%New()
+	set tab = $char(9)
+	set century = $extract($zdate($h,8),1,2)
+	set stream.TranslateTable = "UTF8"
+	set stream.Filename = pFileName
+	While 'stream.AtEnd {
+	set line = stream.ReadLine()
+	If $extract(line,1,4)="取引種別" continue
+	set transactiontype = $piece(line,tab,1)
+	set closedate = $piece(line,tab,3)
+	set closedate = $zdateh($translate(century_closedate,"/","-"),3)
+	set profitloss = 0
+	set fundingcost = 0
+	set openprice = 0
+	set closeprice = 0
+
+	if transactiontype = "DEAL" {
+	  set openprice = $piece(line,tab,7)
+	  set closeprice = $piece(line,tab,10)
+	  set pair = $translate($extract($piece(line,tab,5),1,7),"/","")
+	  set unit = $piece(line,tab,9) * 10000
+	  set profitloss = $piece(line,tab,11)
+
+	  if unit < 0 {
+		 set buysell = "SELL"
+	  }
+	  else {
+		 set buysell = "BUY"
+	  }
+	}
+	
+	elseif (transactiontype = "WITH") || (transactiontype = "DEPO") {
+	  set pair = $translate($piece($piece(line,tab,5)," ",7),"/","")
+	  if $length(pair)'=6 set pair = $translate($extract($piece(line,tab,5),1,7),"/","") 	
+	  set fundingcost = $piece(line,tab,11)
+	  set unit = 0
+	}
+		
+	Set ft = ..%New()
+	Set ft.Broker = "IG"
+	Set ft.BuySell = $get(buysell)
+	Set ft.CurrencyPair = $replace(pair,"Funding","Adjust")
+	Set ft.OpenPrice = +$get(openprice)
+	Set ft.ClosePrice = +$get(closeprice)
+	Set ft.CloseDate = closedate
+	Set ft.ProfitLoss = profitloss
+	Set ft.FundingCost = fundingcost
+	Set ft.TransactionUnit = unit
+	Set status = ft.%Save()
+	If 'status Write $system.Status.DisplayError(status),!
+	}
+	Quit status
+]]></Implementation>
+</Method>
+
+<Method name="LoadM2JData">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pFileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set status = $$$OK
+
+	Set stream = ##class(%FileCharacterStream).%New()
+	set tab = ","
+	set stream.TranslateTable = "UTF8"
+	Set stream.Filename = pFileName
+	While 'stream.AtEnd {
+	  Set line = stream.ReadLine()
+	  If $extract(line,1,4)="注文番号" continue
+	  set ordertype = $piece(line,tab,6)
+	
+	  Set closedate = $piece($piece(line,tab,2)," ",1)
+	  set closedate = $zdateh($translate(closedate,"/","-"),3)
+	  Set opendate = $piece($piece(line,tab,14)," ",1)
+	  if opendate'="" {
+	    set opendate = $zdateh($translate(opendate,"/","-"),3)
+	  }
+	  else {
+		  set opendate = closedate
+	  }
+	  set pair = $translate($extract($piece(line,tab,4),1,7),"/","")
+	  set buysell = $piece(line,tab,7)
+	  set unit = $piece(line,tab,12)
+	  set closeprice = $piece(line,tab,11)
+	  set fundingcost = +$piece(line,tab,13)
+
+	  if ordertype = "決済" {
+	    set openprice = $piece(line,tab,15)
+	    set profitloss = $piece(line,tab,16)
+	    set buysell = $select(buysell="買":"SELL",buysell="売":"BUY",1:"")
+	  } else {
+	    set profitloss = 0
+	    set openprice = closeprice	
+	    set buysell = $select(buysell="買":"BUY",buysell="売":"SELL",1:"")
+	  }
+	
+	  Set ft = ..%New()
+	  Set ft.Broker = "M2J"
+	  Set ft.BuySell = buysell
+	  Set ft.CurrencyPair = pair
+	  Set ft.OpenPrice = openprice
+	  Set ft.ClosePrice = closeprice
+	  Set ft.OpenDate = opendate
+	  Set ft.CloseDate = closedate
+	  Set ft.ProfitLoss = profitloss
+	  Set ft.FundingCost = +fundingcost
+	  Set ft.TransactionUnit = unit
+	  Set status = ft.%Save()
+	  If 'status Write $system.Status.DisplayError(status),!
+	
+    }
+  
+  Quit status
+]]></Implementation>
+</Method>
+
+<Method name="LoadRakutenData">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pFileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set status = $$$OK
+
+	Set stream = ##class(%FileCharacterStream).%New()
+	set tab = $char(9)
+	set stream.TranslateTable = "UTF8"
+	Set stream.Filename = pFileName
+	While 'stream.AtEnd {
+	Set line = stream.ReadLine()
+	If $extract(line,1,2)="約定" continue
+	//ダブルクオートを取り除く
+	set line = $translate(line,"""","") 
+	set ordertype = $piece(line,tab,3)
+	
+	if ordertype = "決済" {
+	  set closedate = $piece($piece(line,tab,11)," ",1)
+	  set closedate = $zdateh($translate(closedate,"/","-"),3)
+	  set opendate = $piece($piece(line,tab,10)," ",1)
+	  set opendate = $zdateh($translate(opendate,"/","-"),3)
+	  set pair = $translate($extract($piece(line,tab,2),1,7),"/","")
+	  set pair = $replace(pair,"ユーロ","EUR")
+	  set pair = $replace(pair,"豪ドル","AUD")	  
+	  set pair = $replace(pair,"NZドル","NZD")	  
+	  set pair = $replace(pair,"ドル","USD")
+	  set pair = $replace(pair,"円","JPY")	  
+	  set pair = $replace(pair,"ポンド","GBP")	  
+	  set buysell = $piece(line,tab,4)
+	  set buysell = $select(buysell="買":"SELL",buysell="売":"BUY",1:"")
+	  set unit = $number($piece(line,tab,5))*1000
+	  set closeprice = $number($piece(line,tab,6))
+	  set profitloss = $number($piece(line,tab,9))
+	  set pl = $piece(line,tab,7)/unit
+	  
+	  if buysell = "BUY" {
+	     set openprice = closeprice - pl
+	  } 
+	  elseif buysell = "SELL" {
+	     set openprice = closeprice + pl
+	  }
+	  
+	  set fundingcost = 0
+	
+	  Set ft = ..%New()
+	  Set ft.Broker = "Rakuten"
+	  Set ft.BuySell = buysell
+	  Set ft.CurrencyPair = pair
+	  Set ft.OpenPrice = openprice
+	  Set ft.ClosePrice = closeprice
+	  Set ft.OpenDate = opendate
+	  Set ft.CloseDate = closedate
+	  Set ft.ProfitLoss = profitloss
+	  Set ft.FundingCost = fundingcost
+	  Set ft.TransactionUnit = unit
+	  Set status = ft.%Save()
+	  If 'status Write $system.Status.DisplayError(status),!
+	}
+  }
+  Quit status
+]]></Implementation>
+</Method>
+
+<Method name="LoadRakutenSwapData">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pFileName:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set status = $$$OK
+
+	set tab = $char(9)
+	Set stream = ##class(%FileCharacterStream).%New()
+	set stream.TranslateTable = "UTF8"
+	Set stream.Filename = pFileName
+	While 'stream.AtEnd {
+	Set line = stream.ReadLine()
+	If $extract(line,1,2)="受渡" continue
+	//ダブルクオートを取り除く
+	set line = $translate(line,"""","") 
+	set ordertype = $piece(line,tab,2)
+	
+	if ordertype = "スワップ" {
+	  Set closedate = $piece(line,tab,1)
+	  set closedate = $zdateh($translate(closedate,"/","-"),3)
+	  Set opendate = $piece($piece(line,tab,5)," ",1)
+	  set opendate = $zdateh($translate(opendate,"/","-"),3)
+	  set others = $piece(line,tab,6)
+	  set pair = $translate($piece($piece(others,":",2)," ",2),"/","")
+	  set pair = $replace(pair,"ユーロ","EUR")
+	  set pair = $replace(pair,"豪ドル","AUD")	  
+	  set pair = $replace(pair,"NZドル","NZD")	  
+	  set pair = $replace(pair,"ドル","USD")
+	  set pair = $replace(pair,"円","JPY")	  
+	  set pair = $replace(pair,"ポンド","GBP")
+	  set buysell = $extract($reverse($piece($piece(others,":",2),"[約定レート]",1)),2)
+	  set buysell = $select(buysell="売":"SELL",buysell="買":"BUY",1:"")
+	  set unit = $number($piece($piece(others,":",2),"[建玉数量]",2))*1000
+	  set openprice = +$piece($piece($piece(others,":",2),"[約定レート]",2),"[建玉数量]",1)
+	  set closeprice = openprice
+	  set profitloss = 0
+	  set fundingcost =$number($translate($piece(line,tab,4),"""",""))
+	
+	  Set ft = ..%New()
+	  Set ft.Broker = "Rakuten"
+	  Set ft.BuySell = buysell
+	  Set ft.CurrencyPair = pair
+	  Set ft.OpenPrice = openprice
+	  Set ft.ClosePrice = closeprice
+	  Set ft.OpenDate = opendate
+	  Set ft.CloseDate = closedate
+	  Set ft.ProfitLoss = profitloss
+	  Set ft.FundingCost = fundingcost
+	  Set ft.TransactionUnit = unit
+	  Set status = ft.%Save()
+	  If 'status Write $system.Status.DisplayError(status),!
+	}
+  }
+  Quit status
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Storage.Persistent</Type>
+<DataLocation>^FX.TradeD</DataLocation>
+<DefaultData>TradeDefaultData</DefaultData>
+<IdLocation>^FX.TradeD</IdLocation>
+<IndexLocation>^FX.TradeI</IndexLocation>
+<StreamLocation>^FX.TradeS</StreamLocation>
+<Data name="TradeDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Broker</Value>
+</Value>
+<Value name="3">
+<Value>OpenDate</Value>
+</Value>
+<Value name="4">
+<Value>CloseDate</Value>
+</Value>
+<Value name="5">
+<Value>CurrencyPair</Value>
+</Value>
+<Value name="6">
+<Value>BuySell</Value>
+</Value>
+<Value name="7">
+<Value>TransactionUnit</Value>
+</Value>
+<Value name="8">
+<Value>OpenPrice</Value>
+</Value>
+<Value name="9">
+<Value>ClosePrice</Value>
+</Value>
+<Value name="10">
+<Value>ProfitLoss</Value>
+</Value>
+<Value name="11">
+<Value>FundingCost</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+
+
+<Class name="FX.TransferRule">
+<Description>
+</Description>
+<Super>Ens.Rule.Definition</Super>
+<TimeChanged>65232,64885.686769</TimeChanged>
+<TimeCreated>65220,43748.403964</TimeCreated>
+
+<Parameter name="RuleAssistClass">
+<Default>Ens.Rule.GeneralBusinessRuleAssist</Default>
+</Parameter>
+
+<XData name="RuleDefinition">
+<XMLNamespace>http://www.intersystems.com/rule</XMLNamespace>
+<Data><![CDATA[
+<ruleDefinition alias="" context="" production="">
+<ruleSet name="FileType" effectiveBegin="" effectiveEnd="">
+<rule name="IG" disabled="false">
+<when condition="Message.FileName [ &quot;tradeBreakdown&quot;">
+<return>"IG"</return>
+</when>
+<when condition="Message.FileName [ &quot;成立&quot;">
+<return>"M2J"</return>
+</when>
+<when condition="Message.FileName [ &quot;payment&quot;">
+<return>"RakutenSwap"</return>
+</when>
+<when condition="Message.FileName [ &quot;rakuten&quot;">
+<return>"Rakuten"</return>
+</when>
+<otherwise>
+<return>"OTHERS"</return>
+</otherwise>
+</rule>
+</ruleSet>
+</ruleDefinition>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Transformation.GaitameOnline">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65307,58798.517155</TimeChanged>
+<TimeCreated>65296,46228.072875</TimeCreated>
+<DependsOn>FX.GaitameOnline.Record,FX.Response.DBLoadMessage</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='FX.GaitameOnline.Record' targetClass='FX.Response.DBLoadMessage' create='new' language='objectscript' >
+<assign value='..ConvertDateTime(source.ExecutionDateTime,"%y-%m-%d %H:%M","%Y%m%d")' property='target.CloseDate' action='set' />
+<assign value='source.CurrencyPair' property='target.CurrencyPair' action='set' />
+<assign value='##class(FX.Utility.TextHandling).GetGaitameBuySell(source.BuyNo,source.SellNo)' property='target.BuySell' action='set' />
+<assign value='##class(FX.Utility.TextHandling).GetGaitameUnitNo(source.BuyNo,source.SellNo)' property='target.TransactionUnit' action='set' />
+<assign value='source.TransactionRate' property='target.ClosePrice' action='set' />
+<assign value='##class(FX.Utility.TextHandling).GetGaitameFundingCost(source.HandlingCost,source.Swap)' property='target.FundingCost' action='set' />
+<assign value='source.TradingPL' property='target.ProfitLoss' action='set' />
+<assign value='"GaitameOnline"' property='target.Broker' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Transformation.IGSeculity">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65307,61308.732783</TimeChanged>
+<TimeCreated>65296,44869.647377</TimeCreated>
+<DependsOn>FX.IGSecurity.Record,FX.Response.DBLoadMessage</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='FX.IGSecurity.Record' targetClass='FX.Response.DBLoadMessage' create='new' language='objectscript' >
+<assign value='..Lookup("BuySell",source.Direction)' property='target.BuySell' action='set' />
+<assign value='source.Size*10000' property='target.TransactionUnit' action='set' />
+<assign value='##class(FX.Utility.TextHandling).RemoveCamma(source.ProfitLoss)' property='target.ProfitLoss' action='set' />
+<assign value='source.Opening' property='target.OpenPrice' action='set' />
+<assign value='source.Closing' property='target.ClosePrice' action='set' />
+<assign value='source.Funding' property='target.FundingCost' action='set' />
+<assign value='..ConvertDateTime(source.OpendDateTime,"%d-%m-%Y %T","%Y%m%d")' property='target.OpenDate' action='set' />
+<assign value='..ConvertDateTime(source.ClosedDateTime,"%d-%m-%Y %T","%Y%m%d")' property='target.CloseDate' action='set' />
+<assign value='..Piece(source.Market," ",1)' property='target.CurrencyPair' action='set' />
+<assign value='"IGSeculity"' property='target.Broker' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Transformation.M2J">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65307,63871.152627</TimeChanged>
+<TimeCreated>65296,45290.383239</TimeCreated>
+<DependsOn>FX.M2J.Record,FX.Response.DBLoadMessage</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='FX.M2J.Record' targetClass='FX.Response.DBLoadMessage' create='new' language='objectscript' >
+<assign value='source.CurrencyPair' property='target.CurrencyPair' action='set' />
+<assign value='..Translate(source.Direction,"買売","売買")' property='target.BuySell' action='set' />
+<assign value='"M2J"' property='target.Broker' action='set' />
+<assign value='source.OrderUnit' property='target.TransactionUnit' action='set' />
+<assign value='source.ProfitLoss' property='target.ProfitLoss' action='set' />
+<assign value='source.AcquisitionPrice' property='target.ClosePrice' action='set' />
+<assign value='..ConvertDateTime(source.OrderedDateTime,"%Y/%m/%d %T","%Y%m%d")' property='target.OpenDate' action='set' />
+<assign value='..ConvertDateTime(source.EstablishedDateTime,"%Y/%m/%d %T","%Y%m%d")' property='target.CloseDate' action='set' />
+<assign value='0' property='target.FundingCost' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Transformation.Rakuten">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65304,55158.684263</TimeChanged>
+<TimeCreated>65295,67367.099</TimeCreated>
+<DependsOn>FX.Rakuten.Record,FX.Response.DBLoadMessage</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='FX.Rakuten.Record' targetClass='FX.Response.DBLoadMessage' create='new' language='objectscript' >
+<assign value='..Lookup("CurrencyPair",source.CurrencyPair)' property='target.CurrencyPair' action='set' />
+<assign value='source.Direction' property='target.BuySell' action='set' />
+<assign value='##class(FX.Utility.TextHandling).RemoveCamma(source.Quantity)' property='target.TransactionUnit' action='set' />
+<assign value='source.ExecutionRate' property='target.ClosePrice' action='set' />
+<assign value='##class(FX.Utility.TextHandling).RemoveCamma(source.ProfitLossYen)' property='target.ProfitLoss' action='set' />
+<assign value='..ConvertDateTime(source.OrderDateTime,"%Y/%m/%d %H:%M","%Y%m%d")' property='target.OpenDate' action='set' />
+<assign value='..ConvertDateTime(source.ExecutionDateTime,"%Y/%m/%d %H:%M","%Y%m%d")' property='target.CloseDate' action='set' />
+<assign value='"Rakuten"' property='target.Broker' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Transformation.RakutenSwap">
+<Super>Ens.DataTransformDTL</Super>
+<TimeChanged>65307,65461.770128</TimeChanged>
+<TimeCreated>65296,44658.157617</TimeCreated>
+<DependsOn>FX.RakutenSwap.Record,FX.Response.DBLoadMessage</DependsOn>
+
+<Parameter name="IGNOREMISSINGSOURCE">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="REPORTERRORS">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="TREATEMPTYREPEATINGFIELDASNULL">
+<Default>0</Default>
+</Parameter>
+
+<XData name="DTL">
+<XMLNamespace>http://www.intersystems.com/dtl</XMLNamespace>
+<Data><![CDATA[
+<transform sourceClass='FX.RakutenSwap.Record' targetClass='FX.Response.DBLoadMessage' create='new' language='objectscript' >
+<assign value='source.ProfitLoss' property='target.FundingCost' action='set' />
+<assign value='..Lookup("CurrencyPair",##class(FX.Utility.TextHandling).GetRakutenSwapCurrency(source.Details))' property='target.CurrencyPair' action='set' />
+<assign value='##class(FX.Utility.TextHandling).GetRakutenSwapBuySell(source.Details)' property='target.BuySell' action='set' />
+<assign value='##class(FX.Utility.TextHandling).GetRakutenSwapUnit(source.Details)' property='target.TransactionUnit' action='set' />
+<assign value='..ConvertDateTime(source.TransactionDateTime,"%Y/%m/%d %H:%M","%Y%m%d")' property='target.OpenDate' action='set' />
+<assign value='##class(FX.Utility.TextHandling).GetRakutenSwapOpenPrice(source.Details)' property='target.OpenPrice' action='set' />
+<assign value='"Rakuten"' property='target.Broker' action='set' />
+<assign value='..ConvertDateTime(source.DeliveryDate,"%y/%m/%d","%Y%m%d")' property='target.CloseDate' action='set' />
+</transform>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="FX.Utility.TextHandling">
+<Super>Ens.Rule.FunctionSet</Super>
+<TimeChanged>65307,58776.488631</TimeChanged>
+<TimeCreated>65302,46911.858769</TimeCreated>
+
+<Method name="GetRakutenSwapCurrency">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDetails:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[	quit $piece($zstrip(pDetails,"<=>W")," ",3)
+]]></Implementation>
+</Method>
+
+<Method name="GetRakutenSwapBuySell">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDetails:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	
+	quit $piece($zstrip(pDetails,"<=>W")," ",4)
+]]></Implementation>
+</Method>
+
+<Method name="GetRakutenSwapOpenPrice">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDetails:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[	quit $piece($piece($zstrip(pDetails,"<=>W")," ",5),"]",2)
+]]></Implementation>
+</Method>
+
+<Method name="GetRakutenSwapUnit">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDetails:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[	quit $inumber($piece($piece($zstrip(pDetails,"<=>W")," ",6),"]",2),",")
+]]></Implementation>
+</Method>
+
+<Method name="RemoveCamma">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pNumber:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[	quit $inumber(pNumber,",")
+]]></Implementation>
+</Method>
+
+<Method name="JDate2H">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pJDate:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set year =$piece(pJDate,"/",1)
+	set month = $piece(pJDate,"/",2)
+	set day = $piece(pJDate,"/",3)
+	quit $zdateh(year_month_day,8)
+]]></Implementation>
+</Method>
+
+<Method name="GetGaitameBuySell">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pBuy:%Integer,pSell:%Integer</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	if +$get(pBuy)>0 Quit "売"
+	if +$get(pSell)>0 Quit "買"
+]]></Implementation>
+</Method>
+
+<Method name="GetGaitameUnitNo">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pBuy:%Integer,pSell:%Integer</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	if +$get(pBuy)>0 Quit +pBuy*1000
+	if +$get(pSell)>0 Quit +pSell*1000
+]]></Implementation>
+</Method>
+
+<Method name="GetGaitameFundingCost">
+<Final>1</Final>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pHandlingCost:%String,pSwap:%String</FormalSpec>
+<Language>objectscript</Language>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[	quit +pHandlingCost -  pSwap
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Project name="fx" LastModified="2020-01-31 13:09:06.732983">
+  <Items>
+    <ProjectItem name="FX.BP.BuildDB" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Cube.TradingResult" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.DB.Trade" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.GaitameOnline.Record" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.IGSecurity.Record" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.M2J.Record" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Operation.RecordInsert" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Rakuten.Record" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.RakutenSwap.Record" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Request.DBLoadMessage" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Response.DBLoadMessage" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Transformation.GaitameOnline" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Transformation.IGSeculity" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Transformation.M2J" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Transformation.Rakuten" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Transformation.RakutenSwap" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Utility.TextHandling" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.IGSecurity" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.LoadTransaction" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.M2J" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Rakuten" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.RakutenSwap" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.Trade" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.TransferRule" type="CLS"></ProjectItem>
+    <ProjectItem name="FX.GaitameOnline" type="CLS"></ProjectItem>
+  </Items>
+</Project>
+</Export>

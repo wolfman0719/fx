@@ -1,0 +1,16 @@
+
+zn "%SYS"
+
+Do ##class(Security.Users).UnExpireUserPasswords("*")
+Do ##class(Config.NLS.Locales).Install("jpuw")
+Do ##class(%EnsembleMgr).EnableNamespace("USER")
+set sec = ##class("Security.Applications").%OpenId("/csp/user")
+set sec.DeepSeeEnabled = 1
+set status = sec.%Save()
+
+zn "USER"
+
+set io = ##class(%SYS.NLS.Device).SetIO("UTF8")
+Do $system.OBJ.LoadDir("/intersystems/iris/fx/src","cuk",,1)
+Do $system.OBJ.Load("/intersystems/iris/fx/lookuptable.xml","ck")
+halt

@@ -1,0 +1,8 @@
+
+zn "USER"
+
+Do ##class(Ens.Director).StartProduction("FX.LoadTransaction")
+hang 30
+Do ##class(%DeepSee.Utils).%BuildCube("TradingResult")
+
+halt
