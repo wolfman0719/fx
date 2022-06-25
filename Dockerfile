@@ -1,11 +1,7 @@
-ARG IMAGE=store/intersystems/iris-community-arm64:2020.4.0.547.0
-ARG IMAGE=store/intersystems/iris-community-arm64:2021.1.0.215.0
 ARG IMAGE=store/intersystems/iris-community-arm64:2021.2.0.649.0
-ARG IMAGE=intersystemsdc/iris-community:2020.3.0.221.0-zpm
-ARG IMAGE=intersystemsdc/iris-community:2020.4.0.547.0-zpm
-ARG IMAGE=store/intersystems/iris-community:2020.4.0.547.0
-ARG IMAGE=store/intersystems/iris-community:2021.1.0.215.0
+ARG IMAGE=containers.intersystems.com/intersystems/iris-community-arm64:2022.1.0.209.0
 ARG IMAGE=store/intersystems/iris-community:2021.2.0.649.0
+ARG IMAGE=containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0
 FROM $IMAGE
 ARG COMMIT_ID="fxdemo"
 
