@@ -1,7 +1,7 @@
 ARG IMAGE=containers.intersystems.com/intersystems/iris-community-arm64:2022.1.0.209.0
-ARG IMAGE=containers.intersystems.com/intersystems/iris-community-arm64:2022.2.0.368.0
+ARG IMAGE=containers.intersystems.com/intersystems/iris-community-arm64:2023.1.0.235.1
 ARG IMAGE=containers.intersystems.com/intersystems/iris-community:2022.1.0.209.0
-ARG IMAGE=containers.intersystems.com/intersystems/iris-community:2022.2.0.368.0
+ARG IMAGE=containers.intersystems.com/intersystems/iris-community:2023.1.0.235.1
 FROM $IMAGE
 ARG COMMIT_ID="fxdemo"
 
