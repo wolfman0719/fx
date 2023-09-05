@@ -12,9 +12,9 @@ services:
     
     ports:
     # superserver default port 
-    - "51776:1972"
+    - "51773:1972"
     # webserver/management portal port
-    - "52776:52773"
+    - "52773:52773"
     
     environment:
     - TZ=JST-9
