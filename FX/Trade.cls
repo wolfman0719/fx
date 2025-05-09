@@ -89,230 +89,230 @@ Property FundingCost As %Numeric(SCALE = 2);
 
 ClassMethod LoadIGData(pFileName As %String) As %Status
 {
-	set status = $$$OK
+  set status = $$$OK
 	
-	set stream = ##class(%FileCharacterStream).%New()
-	set tab = $char(9)
-	set century = $extract($zdate($h,8),1,2)
-	set stream.TranslateTable = "UTF8"
-	set stream.Filename = pFileName
-	While 'stream.AtEnd {
-	set line = stream.ReadLine()
-	If $extract(line,1,4)="取引種別" continue
-	set transactiontype = $piece(line,tab,1)
-	set closedate = $piece(line,tab,3)
-	set closedate = $zdateh($translate(century_closedate,"/","-"),3)
-	set profitloss = 0
-	set fundingcost = 0
-	set openprice = 0
-	set closeprice = 0
+  set stream = ##class(%FileCharacterStream).%New()
+  set tab = $char(9)
+  set century = $extract($zdate($h,8),1,2)
+  set stream.TranslateTable = "UTF8"
+  set stream.Filename = pFileName
+  While 'stream.AtEnd {
+    set line = stream.ReadLine()
+    If $extract(line,1,4)="取引種別" continue
+    set transactiontype = $piece(line,tab,1)
+    set closedate = $piece(line,tab,3)
+    set closedate = $zdateh($translate(century_closedate,"/","-"),3)
+    set profitloss = 0
+    set fundingcost = 0
+    set openprice = 0
+    set closeprice = 0
 
-	if transactiontype = "DEAL" {
-	  set openprice = $piece(line,tab,7)
-	  set closeprice = $piece(line,tab,10)
-	  set pair = $translate($extract($piece(line,tab,5),1,7),"/","")
-	  set unit = $piece(line,tab,9) * 10000
-	  set profitloss = $piece(line,tab,11)
+    if transactiontype = "DEAL" {
+      set openprice = $piece(line,tab,7)
+      set closeprice = $piece(line,tab,10)
+      set pair = $translate($extract($piece(line,tab,5),1,7),"/","")
+      set unit = $piece(line,tab,9) * 10000
+      set profitloss = $piece(line,tab,11)
 
-	  if unit < 0 {
-		 set buysell = "SELL"
-	  }
-	  else {
-		 set buysell = "BUY"
-	  }
-	}
+      if unit < 0 {
+        set buysell = "SELL"
+      }
+      else {
+        set buysell = "BUY"
+      }
+    }
 	
-	elseif (transactiontype = "WITH") || (transactiontype = "DEPO") {
-	  set pair = $translate($piece($piece(line,tab,5)," ",7),"/","")
-	  if $length(pair)'=6 set pair = $translate($extract($piece(line,tab,5),1,7),"/","") 	
-	  set fundingcost = $piece(line,tab,11)
-	  set unit = 0
-	}
+    elseif (transactiontype = "WITH") || (transactiontype = "DEPO") {
+      set pair = $translate($piece($piece(line,tab,5)," ",7),"/","")
+      if $length(pair)'=6 set pair = $translate($extract($piece(line,tab,5),1,7),"/","") 	
+      set fundingcost = $piece(line,tab,11)
+      set unit = 0
+    }
 		
-	Set ft = ..%New()
-	Set ft.Broker = "IG"
-	Set ft.BuySell = $get(buysell)
-	Set ft.CurrencyPair = $replace(pair,"Funding","Adjust")
-	Set ft.OpenPrice = +$get(openprice)
-	Set ft.ClosePrice = +$get(closeprice)
-	Set ft.CloseDate = closedate
-	Set ft.ProfitLoss = profitloss
-	Set ft.FundingCost = fundingcost
-	Set ft.TransactionUnit = unit
-	Set status = ft.%Save()
-	If 'status Write $system.Status.DisplayError(status),!
-	}
-	Quit status
+    Set ft = ..%New()
+    Set ft.Broker = "IG"
+    Set ft.BuySell = $get(buysell)
+    Set ft.CurrencyPair = $replace(pair,"Funding","Adjust")
+    Set ft.OpenPrice = +$get(openprice)
+    Set ft.ClosePrice = +$get(closeprice)
+    Set ft.CloseDate = closedate
+    Set ft.ProfitLoss = profitloss
+    Set ft.FundingCost = fundingcost
+    Set ft.TransactionUnit = unit
+    Set status = ft.%Save()
+    If 'status Write $system.Status.DisplayError(status),!
+  }
+  Quit status
 }
 
 ClassMethod LoadM2JData(pFileName As %String) As %Status
 {
-	set status = $$$OK
+  set status = $$$OK
 
-	Set stream = ##class(%FileCharacterStream).%New()
-	set tab = ","
-	set stream.TranslateTable = "UTF8"
-	Set stream.Filename = pFileName
-	While 'stream.AtEnd {
-	  Set line = stream.ReadLine()
-	  If $extract(line,1,4)="注文番号" continue
-	  set ordertype = $piece(line,tab,6)
+  Set stream = ##class(%FileCharacterStream).%New()
+  set tab = ","
+  set stream.TranslateTable = "UTF8"
+  Set stream.Filename = pFileName
+  While 'stream.AtEnd {
+    Set line = stream.ReadLine()
+    If $extract(line,1,4)="注文番号" continue
+    set ordertype = $piece(line,tab,6)
 	
-	  Set closedate = $piece($piece(line,tab,2)," ",1)
-	  set closedate = $zdateh($translate(closedate,"/","-"),3)
-	  Set opendate = $piece($piece(line,tab,14)," ",1)
-	  if opendate'="" {
-	    set opendate = $zdateh($translate(opendate,"/","-"),3)
-	  }
-	  else {
-		  set opendate = closedate
-	  }
-	  set pair = $translate($extract($piece(line,tab,4),1,7),"/","")
-	  set buysell = $piece(line,tab,7)
-	  set unit = $piece(line,tab,12)
-	  set closeprice = $piece(line,tab,11)
-	  set fundingcost = +$piece(line,tab,13)
-
-	  if ordertype = "決済" {
-	    set openprice = $piece(line,tab,15)
-	    set profitloss = $piece(line,tab,16)
-	    set buysell = $select(buysell="買":"SELL",buysell="売":"BUY",1:"")
-	  } else {
-	    set profitloss = 0
-	    set openprice = closeprice	
-	    set buysell = $select(buysell="買":"BUY",buysell="売":"SELL",1:"")
-	  }
-	
-	  Set ft = ..%New()
-	  Set ft.Broker = "M2J"
-	  Set ft.BuySell = buysell
-	  Set ft.CurrencyPair = pair
-	  Set ft.OpenPrice = openprice
-	  Set ft.ClosePrice = closeprice
-	  Set ft.OpenDate = opendate
-	  Set ft.CloseDate = closedate
-	  Set ft.ProfitLoss = profitloss
-	  Set ft.FundingCost = +fundingcost
-	  Set ft.TransactionUnit = unit
-	  Set status = ft.%Save()
-	  If 'status Write $system.Status.DisplayError(status),!
-	
+    Set closedate = $piece($piece(line,tab,2)," ",1)
+    set closedate = $zdateh($translate(closedate,"/","-"),3)
+    Set opendate = $piece($piece(line,tab,14)," ",1)
+    if opendate'="" {
+      set opendate = $zdateh($translate(opendate,"/","-"),3)
     }
+    else {
+      set opendate = closedate
+    }
+    set pair = $translate($extract($piece(line,tab,4),1,7),"/","")
+    set buysell = $piece(line,tab,7)
+    set unit = $piece(line,tab,12)
+    set closeprice = $piece(line,tab,11)
+    set fundingcost = +$piece(line,tab,13)
+
+    if ordertype = "決済" {
+      set openprice = $piece(line,tab,15)
+      set profitloss = $piece(line,tab,16)
+      set buysell = $select(buysell="買":"SELL",buysell="売":"BUY",1:"")
+    } else {
+      set profitloss = 0
+      set openprice = closeprice	
+      set buysell = $select(buysell="買":"BUY",buysell="売":"SELL",1:"")
+    }
+	
+    Set ft = ..%New()
+    Set ft.Broker = "M2J"
+    Set ft.BuySell = buysell
+    Set ft.CurrencyPair = pair
+    Set ft.OpenPrice = openprice
+    Set ft.ClosePrice = closeprice
+    Set ft.OpenDate = opendate
+    Set ft.CloseDate = closedate
+    Set ft.ProfitLoss = profitloss
+    Set ft.FundingCost = +fundingcost
+    Set ft.TransactionUnit = unit
+    Set status = ft.%Save()
+    If 'status Write $system.Status.DisplayError(status),!
+	
+  }
   
   Quit status
 }
 
 ClassMethod LoadRakutenData(pFileName As %String) As %Status
 {
-	set status = $$$OK
+  set status = $$$OK
 
-	Set stream = ##class(%FileCharacterStream).%New()
-	set tab = $char(9)
-	set stream.TranslateTable = "UTF8"
-	Set stream.Filename = pFileName
-	While 'stream.AtEnd {
-	Set line = stream.ReadLine()
-	If $extract(line,1,2)="約定" continue
-	//ダブルクオートを取り除く
-	set line = $translate(line,"""","") 
-	set ordertype = $piece(line,tab,3)
+  Set stream = ##class(%FileCharacterStream).%New()
+  set tab = $char(9)
+  set stream.TranslateTable = "UTF8"
+  Set stream.Filename = pFileName
+  While 'stream.AtEnd {
+    Set line = stream.ReadLine()
+    If $extract(line,1,2)="約定" continue
+    //ダブルクオートを取り除く
+    set line = $translate(line,"""","") 
+    set ordertype = $piece(line,tab,3)
 	
-	if ordertype = "決済" {
-	  set closedate = $piece($piece(line,tab,11)," ",1)
-	  set closedate = $zdateh($translate(closedate,"/","-"),3)
-	  set opendate = $piece($piece(line,tab,10)," ",1)
-	  set opendate = $zdateh($translate(opendate,"/","-"),3)
-	  set pair = $translate($extract($piece(line,tab,2),1,7),"/","")
-	  set pair = $replace(pair,"ユーロ","EUR")
-	  set pair = $replace(pair,"豪ドル","AUD")	  
-	  set pair = $replace(pair,"NZドル","NZD")	  
-	  set pair = $replace(pair,"ドル","USD")
-	  set pair = $replace(pair,"円","JPY")	  
-	  set pair = $replace(pair,"ポンド","GBP")	  
-	  set buysell = $piece(line,tab,4)
-	  set buysell = $select(buysell="買":"SELL",buysell="売":"BUY",1:"")
-	  set unit = $number($piece(line,tab,5))*1000
-	  set closeprice = $number($piece(line,tab,6))
-	  set profitloss = $number($piece(line,tab,9))
-	  set pl = $piece(line,tab,7)/unit
+    if ordertype = "決済" {
+      set closedate = $piece($piece(line,tab,11)," ",1)
+      set closedate = $zdateh($translate(closedate,"/","-"),3)
+      set opendate = $piece($piece(line,tab,10)," ",1)
+      set opendate = $zdateh($translate(opendate,"/","-"),3)
+      set pair = $translate($extract($piece(line,tab,2),1,7),"/","")
+      set pair = $replace(pair,"ユーロ","EUR")
+      set pair = $replace(pair,"豪ドル","AUD")	  
+      set pair = $replace(pair,"NZドル","NZD")	  
+      set pair = $replace(pair,"ドル","USD")
+      set pair = $replace(pair,"円","JPY")	  
+      set pair = $replace(pair,"ポンド","GBP")	  
+      set buysell = $piece(line,tab,4)
+      set buysell = $select(buysell="買":"SELL",buysell="売":"BUY",1:"")
+      set unit = $number($piece(line,tab,5))*1000
+      set closeprice = $number($piece(line,tab,6))
+      set profitloss = $number($piece(line,tab,9))
+      set pl = $piece(line,tab,7)/unit
 	  
-	  if buysell = "BUY" {
-	     set openprice = closeprice - pl
-	  } 
-	  elseif buysell = "SELL" {
-	     set openprice = closeprice + pl
-	  }
+      if buysell = "BUY" {
+        set openprice = closeprice - pl
+      } 
+      elseif buysell = "SELL" {
+        set openprice = closeprice + pl
+      }
 	  
-	  set fundingcost = 0
+      set fundingcost = 0
 	
-	  Set ft = ..%New()
-	  Set ft.Broker = "Rakuten"
-	  Set ft.BuySell = buysell
-	  Set ft.CurrencyPair = pair
-	  Set ft.OpenPrice = openprice
-	  Set ft.ClosePrice = closeprice
-	  Set ft.OpenDate = opendate
-	  Set ft.CloseDate = closedate
-	  Set ft.ProfitLoss = profitloss
-	  Set ft.FundingCost = fundingcost
-	  Set ft.TransactionUnit = unit
-	  Set status = ft.%Save()
-	  If 'status Write $system.Status.DisplayError(status),!
-	}
+      Set ft = ..%New()
+      Set ft.Broker = "Rakuten"
+      Set ft.BuySell = buysell
+      Set ft.CurrencyPair = pair
+      Set ft.OpenPrice = openprice
+      Set ft.ClosePrice = closeprice
+      Set ft.OpenDate = opendate
+      Set ft.CloseDate = closedate
+      Set ft.ProfitLoss = profitloss
+      Set ft.FundingCost = fundingcost
+      Set ft.TransactionUnit = unit
+      Set status = ft.%Save()
+      If 'status Write $system.Status.DisplayError(status),!
+    }
   }
   Quit status
 }
 
 ClassMethod LoadRakutenSwapData(pFileName As %String) As %Status
 {
-	set status = $$$OK
+  set status = $$$OK
 
-	set tab = $char(9)
-	Set stream = ##class(%FileCharacterStream).%New()
-	set stream.TranslateTable = "UTF8"
-	Set stream.Filename = pFileName
-	While 'stream.AtEnd {
-	Set line = stream.ReadLine()
-	If $extract(line,1,2)="受渡" continue
-	//ダブルクオートを取り除く
-	set line = $translate(line,"""","") 
-	set ordertype = $piece(line,tab,2)
+  set tab = $char(9)
+  Set stream = ##class(%FileCharacterStream).%New()
+  set stream.TranslateTable = "UTF8"
+  Set stream.Filename = pFileName
+  While 'stream.AtEnd {
+    Set line = stream.ReadLine()
+    If $extract(line,1,2)="受渡" continue
+    //ダブルクオートを取り除く
+    set line = $translate(line,"""","") 
+    set ordertype = $piece(line,tab,2)
 	
-	if ordertype = "スワップ" {
-	  Set closedate = $piece(line,tab,1)
-	  set closedate = $zdateh($translate(closedate,"/","-"),3)
-	  Set opendate = $piece($piece(line,tab,5)," ",1)
-	  set opendate = $zdateh($translate(opendate,"/","-"),3)
-	  set others = $piece(line,tab,6)
-	  set pair = $translate($piece($piece(others,":",2)," ",2),"/","")
-	  set pair = $replace(pair,"ユーロ","EUR")
-	  set pair = $replace(pair,"豪ドル","AUD")	  
-	  set pair = $replace(pair,"NZドル","NZD")	  
-	  set pair = $replace(pair,"ドル","USD")
-	  set pair = $replace(pair,"円","JPY")	  
-	  set pair = $replace(pair,"ポンド","GBP")
-	  set buysell = $extract($reverse($piece($piece(others,":",2),"[約定レート]",1)),2)
-	  set buysell = $select(buysell="売":"SELL",buysell="買":"BUY",1:"")
-	  set unit = $number($piece($piece(others,":",2),"[建玉数量]",2))*1000
-	  set openprice = +$piece($piece($piece(others,":",2),"[約定レート]",2),"[建玉数量]",1)
-	  set closeprice = openprice
-	  set profitloss = 0
-	  set fundingcost =$number($translate($piece(line,tab,4),"""",""))
+    if ordertype = "スワップ" {
+      Set closedate = $piece(line,tab,1)
+      set closedate = $zdateh($translate(closedate,"/","-"),3)
+      Set opendate = $piece($piece(line,tab,5)," ",1)
+      set opendate = $zdateh($translate(opendate,"/","-"),3)
+      set others = $piece(line,tab,6)
+      set pair = $translate($piece($piece(others,":",2)," ",2),"/","")
+      set pair = $replace(pair,"ユーロ","EUR")
+      set pair = $replace(pair,"豪ドル","AUD")	  
+      set pair = $replace(pair,"NZドル","NZD")	  
+      set pair = $replace(pair,"ドル","USD")
+      set pair = $replace(pair,"円","JPY")	  
+      set pair = $replace(pair,"ポンド","GBP")
+      set buysell = $extract($reverse($piece($piece(others,":",2),"[約定レート]",1)),2)
+      set buysell = $select(buysell="売":"SELL",buysell="買":"BUY",1:"")
+      set unit = $number($piece($piece(others,":",2),"[建玉数量]",2))*1000
+      set openprice = +$piece($piece($piece(others,":",2),"[約定レート]",2),"[建玉数量]",1)
+      set closeprice = openprice
+      set profitloss = 0
+      set fundingcost =$number($translate($piece(line,tab,4),"""",""))
 	
-	  Set ft = ..%New()
-	  Set ft.Broker = "Rakuten"
-	  Set ft.BuySell = buysell
-	  Set ft.CurrencyPair = pair
-	  Set ft.OpenPrice = openprice
-	  Set ft.ClosePrice = closeprice
-	  Set ft.OpenDate = opendate
-	  Set ft.CloseDate = closedate
-	  Set ft.ProfitLoss = profitloss
-	  Set ft.FundingCost = fundingcost
-	  Set ft.TransactionUnit = unit
-	  Set status = ft.%Save()
-	  If 'status Write $system.Status.DisplayError(status),!
-	}
+      Set ft = ..%New()
+      Set ft.Broker = "Rakuten"
+      Set ft.BuySell = buysell
+      Set ft.CurrencyPair = pair
+      Set ft.OpenPrice = openprice
+      Set ft.ClosePrice = closeprice
+      Set ft.OpenDate = opendate
+      Set ft.CloseDate = closedate
+      Set ft.ProfitLoss = profitloss
+      Set ft.FundingCost = fundingcost
+      Set ft.TransactionUnit = unit
+      Set status = ft.%Save()
+      If 'status Write $system.Status.DisplayError(status),!
+    }
   }
   Quit status
 }
